@@ -44,7 +44,6 @@ function selectProducts() {
 				},
 			])
 			.then(function(answer) {
-				console.log('product choice: ' + answer.choice);
 				if (answer.choice <= results.length) {
 					verifyQuantity(answer.choice, answer.units);
 				} else {
@@ -64,23 +63,66 @@ function selectProducts() {
 }
 
 function verifyQuantity(userIDChoice, userQtyInput) {
-	var query = 'SELECT stock_quantity FROM products WHERE ?';
+	const query = 'SELECT stock_quantity FROM products WHERE ?';
 	connection.query(query, { item_id: userIDChoice }, function(err, res) {
 		if (err) throw err;
 		if (res[0].stock_quantity >= userQtyInput) {
-			console.log('User Qty: '+ userQtyInput);
-			console.log('Available Qty: ' + res[0].stock_quantity);
-			fullfillment();
+			fulfillment(userIDChoice, userQtyInput, res[0].stock_quantity);
 		} else {
-			console.log('User Qty: '+ userQtyInput);
-			console.log('Available Qty: ' + res[0].stock_quantity);
-			console.log('Insufficient quantity!');
-			connection.end();
+			console.log('Your Qty: ' + userQtyInput + '. Available Qty: ' + res[0].stock_quantity);
+			confirm('Insufficient quantity! Would you like to try again?').then(
+				function confirmed() {
+					selectProducts();
+				},
+				function cancelled() {
+					console.log('Goodbye!');
+					connection.end();
+				}
+			);
 		}
 	});
 }
 
-function fullfillment() {
-	console.log('it worked!');
-	connection.end();
+function fulfillment(userIDChoice, userQtyInput, previousStock) {
+	const reducedStock = previousStock - userQtyInput;
+	const updateStock = 'UPDATE products SET ? WHERE ?';
+	connection.query(
+		updateStock,
+		[
+			{
+				stock_quantity: reducedStock,
+			},
+			{
+				item_id: userIDChoice,
+			},
+		],
+		function(err) {
+			if (err) throw err;
+			finalPrice(userIDChoice, userQtyInput);
+		}
+	);
+}
+
+function finalPrice(userIDChoice, userQtyInput) {
+	const queryPrice = 'SELECT price FROM products WHERE ?';
+	connection.query(
+		queryPrice,
+		{
+			item_id: userIDChoice,
+		},
+		function(err, res) {
+			if (err) throw err;
+			confirm(
+				`Bid placed successfully! Your total cost is $${parseFloat(res[0].price * userQtyInput).toFixed(2)}. Would you like to place another order?`
+			).then(
+				function confirmed() {
+					selectProducts();
+				},
+				function cancelled() {
+					console.log('Goodbye!');
+					connection.end();
+				}
+			);
+		}
+	);
 }
