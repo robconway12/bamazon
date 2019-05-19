@@ -18,3 +18,5 @@ Once the customer has placed the order, the app checks if the store has enough o
 However, if the store does have enough of the product, it updates the SQL database to reflect the remaining quantity. Once the update goes through, it shows the customer the total cost of their purchase.
 
 It will ask the customer if they would like to make another purchase and it not, the app closes.
+
+DEMO VIDEO: https://drive.google.com/file/d/1w1DqC-o6NR4iO-rejmEXSg0y40YecnRl/view?usp=sharing
